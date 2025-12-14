@@ -1,0 +1,171 @@
+:root {
+    /* Elegant Dark Gradient */
+    --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+    --bg-color: #0f172a;
+    /* Fallback */
+
+    --text-primary: #f8fafc;
+    /* Soft white */
+    --text-secondary: rgba(226, 232, 240, 0.8);
+    /* Slate-200 with opacity */
+    --accent-glow: rgba(56, 189, 248, 0.1);
+    /* Sky blue glow */
+    --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    cursor: none;
+}
+
+body {
+    background: var(--bg-gradient);
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    font-family: var(--font-stack);
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    user-select: none;
+    transition: all 1s ease;
+}
+
+body:hover {
+    cursor: default;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    padding: 2vmin;
+}
+
+/* Fullscreen Button */
+.fs-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    font-size: 1.5rem;
+    padding: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 100;
+    transition: opacity 0.3s;
+}
+
+/* Top Bar - Date */
+.top-bar {
+    display: flex;
+    justify-content: center;
+    padding-top: 4vh;
+    margin-bottom: -4vh;
+    /* Slight overlap or pull */
+    z-index: 10;
+}
+
+.date-display {
+    font-size: 5vw;
+    /* Much larger */
+    font-weight: 300;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Time Main */
+.time-main {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.time-display {
+    font-size: 35vw;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -2vw;
+    display: flex;
+    align-items: baseline;
+    gap: 0;
+
+    /* Pretty Gradient Text */
+    background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 50px rgba(255, 255, 255, 0.15));
+}
+
+.separator {
+    position: relative;
+    top: -2.5vw;
+    opacity: 0.8;
+}
+
+/* Bottom Bar */
+.bottom-bar {
+    padding: 4vh 4vw;
+    /* More padding */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 1.5vmin;
+    color: var(--text-secondary);
+}
+
+.countdown-display {
+    font-size: 3.5vw;
+    /* Balanced with Date */
+    font-variant-numeric: tabular-nums;
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+    /* Slate-400 */
+}
+
+.weather-display {
+    font-size: 3.5vw;
+    font-weight: 500;
+}
+
+/* Quiet Hours (Night Mode) */
+body.quiet-hours {
+    background: #000000;
+    --text-primary: #78350f;
+    /* Amber-900 */
+    --text-secondary: #451a03;
+    /* Amber-950 */
+}
+
+body.quiet-hours .time-display {
+    background: none;
+    color: #d97706;
+    /* Amber-600 */
+    -webkit-text-fill-color: initial;
+    filter: drop-shadow(0 0 20px rgba(217, 119, 6, 0.2));
+    text-shadow: none;
+}
+
+body.quiet-hours .date-display,
+body.quiet-hours .countdown-display,
+body.quiet-hours .weather-display {
+    color: #92400e;
+    /* Amber-700 */
+    text-shadow: none;
+}
