@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bedroom Hub</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container" id="app">
+        <!-- Fullscreen Toggle (Hidden when active) -->
+        <button id="fs-btn" class="fs-button">⛶</button>
+
+        <!-- Top Info Bar -->
+        <header class="top-bar">
+            <div class="info-item date-display" id="date">Mon, Dec 14</div>
+            <div class="info-item weather-display" id="weather">
+                <span class="weather-icon">☁️</span> 22°C
+            </div>
+        </header>
+
+        <!-- Main Time Row -->
+        <main class="time-main">
+            <div class="time-display" id="time-display">
+                <span id="hour">07</span><span class="separator"></span><span id="minute">24</span>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
