@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Stop. Breathe. Choose.</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+    body {
+        margin: 0;
+        height: 100vh;
+        background: #0f172a;
+        color: #e5e7eb;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .card {
+        max-width: 520px;
+        padding: 40px;
+        background: #020617;
+        border-radius: 16px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    }
+
+    h1 {
+        font-size: 2rem;
+        margin-bottom: 16px;
+        color: #f87171;
+    }
+
+    p {
+        font-size: 1.1rem;
+        line-height: 1.6;
+        margin-bottom: 16px;
+        color: #d1d5db;
+    }
+
+    .countdown {
+        font-size: 2.5rem;
+        margin: 24px 0;
+        color: #38bdf8;
+    }
+
+    button {
+        margin-top: 12px;
+        padding: 12px 20px;
+        font-size: 1rem;
+        border: none;
+        border-radius: 8px;
+        background: #22c55e;
+        color: #022c22;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background: #16a34a;
+    }
+
+    .small {
+        font-size: 0.9rem;
+        opacity: 0.7;
+        margin-top: 16px;
+    }
+</style>
+</head>
+
+<body>
+<div class="card">
+    <h1>Stop.</h1>
+
+    <p>
+        This urge will pass.<br>
+        Porn never made your life better — it only stole time, energy, and focus.
+    </p>
+
+    <p>
+        You chose to protect yourself.<br>
+        That choice still stands.
+    </p>
+
+    <div class="countdown" id="timer">30</div>
+
+    <p>
+        Take a deep breath.<br>
+        Stand up. Drink water. Walk away.
+    </p>
+
+    <button onclick="window.close()">Close This Tab</button>
+
+    <div class="small">
+        You are not weak. You are training your brain.
+    </div>
+</div>
+
+<script>
+let seconds = 30;
+const timer = document.getElementById("timer");
+
+const interval = setInterval(() => {
+    seconds--;
+    timer.textContent = seconds;
+    if (seconds <= 0) {
+        clearInterval(interval);
+        timer.textContent = "Now leave.";
+    }
+}, 1000);
+</script>
+
+</body>
+</html>

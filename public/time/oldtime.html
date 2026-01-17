@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- These meta tags help if you can "Bookmark to Home Screen" -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Hub</title>
+    <style type="text/css">
+        /* RESET */
+        * { margin: 0; padding: 0; border: 0; }
+
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: "Arial Black", "Arial", sans-serif;
+            /* TRICK 1: Allow the body to be taller than the screen so we can scroll */
+            min-height: 120%; 
+            width: 100%;
+            /* TRICK 2: Enable scrolling, don't hide it yet */
+            overflow-y: scroll; 
+            margin: 0;
+        }
+
+        /* LAYOUT CONTAINER */
+        /* TRICK 3: Fix the clock to the screen so it doesn't move when we scroll the bar away */
+        #fixed-container {
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            z-index: 10;
+            background-color: #000000; /* Ensure background covers scrolling area */
+        }
+
+        #layout-table {
+            display: table;
+            width: 100%;
+            height: 100%;
+            border-collapse: collapse;
+        }
+
+        #layout-cell {
+            display: table-cell;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        /* DATE STYLE (User Config: 120px) */
+        #date-display {
+            font-size: 120px; 
+            color: #888888;
+            font-weight: normal;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 20px; 
+        }
+
+        /* TIME STYLE (User Config: 480px) */
+        #time-display {
+            font-size: 480px; 
+            font-weight: bold;
+            line-height: 0.8; 
+            color: #ffffff;
+            white-space: nowrap;
+            letter-spacing: -10px; 
+        }
+
+        .spacer {
+            display: inline-block;
+            width: 1px; 
+        }
+
+        /* FULLSCREEN BUTTON (Overlay) */
+        #fs-trigger {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            background: rgba(255,255,255,0.1);
+            color: #555;
+            text-align: center;
+            line-height: 50px;
+            font-size: 14px;
+            z-index: 999;
+            cursor: pointer;
+            border-top: 1px solid #333;
+        }
+
+        /* NIGHT MODE */
+        body.night-mode #fixed-container {
+            background-color: #000000;
+        }
+        body.night-mode #time-display {
+            color: #b91c1c; 
+        }
+        body.night-mode #date-display {
+            color: #450a0a; 
+        }
+    </style>
+</head>
+<body>
+
+    <!-- The Fixed Layer (Clock) -->
+    <div id="fixed-container">
+        <div id="layout-table">
+            <div id="layout-cell">
+                <div id="date-display">LOADING</div>
+                <div id="time-display">
+                    <span id="hour">--</span><span class="spacer"></span><span id="minute">--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invisible spacer to force page height for scrolling -->
+    <div style="height: 1000px; width: 1px;"></div>
+
+    <!-- Manual Trigger Button -->
+    <div id="fs-trigger" onclick="forceFullScreen()">
+        TAP HERE TO HIDE BAR
+    </div>
+
+    <script type="text/javascript">
+        // --- CONFIG ---
+        var QUIET_START = 1; 
+        var QUIET_END = 6;   
+
+        var elHour = document.getElementById('hour');
+        var elMin = document.getElementById('minute');
+        var elDate = document.getElementById('date-display');
+        var elBody = document.body;
+        var elTrigger = document.getElementById('fs-trigger');
+
+        var days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+        var months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
+        function pad(n) { return n < 10 ? '0' + n : n; }
+
+        function updateClock() {
+            var now = new Date();
+            var h = now.getHours();
+            var m = now.getMinutes();
+
+            elHour.innerHTML = pad(h);
+            elMin.innerHTML = pad(m);
+            elDate.innerHTML = days[now.getDay()] + ", " + months[now.getMonth()] + " " + now.getDate();
+
+            if (h >= QUIET_START && h < QUIET_END) {
+                elBody.className = "night-mode";
+            } else {
+                elBody.className = "";
+            }
+        }
+
+        // --- FULLSCREEN HACK FOR ANDROID 2.3 ---
+        function forceFullScreen() {
+            // 1. Hide the button
+            elTrigger.style.display = 'none';
+            
+            // 2. Scroll down to hide address bar
+            // We use a timeout to let the browser register the touch first
+            setTimeout(function() {
+                window.scrollTo(0, 1);
+            }, 100);
+        }
+
+        // Init
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        // Try automatically on load
+        window.onload = function() {
+            setTimeout(function() {
+                window.scrollTo(0, 1);
+            }, 500);
+        };
+
+    </script>
+</body>
+</html>

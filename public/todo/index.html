@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily To-Do Dashboard</title>
+    <style>
+        /* Reset and base styles for Kindle compatibility */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Full-screen layout */
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            background-color: white;
+            color: black;
+            font-family: monospace; /* Kindle-safe fallback */
+            font-size: 16px;
+            line-height: 1.4;
+        }
+
+        /* Main container */
+        #dashboard {
+            padding: 20px;
+            height: 100%;
+            display: block; /* No flexbox for Kindle compatibility */
+        }
+
+        /* Date header - large and prominent */
+        #current-date {
+            font-size: 32px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid black;
+            padding-bottom: 15px;
+        }
+
+        /* Todo list container */
+        #todo-list {
+            margin-top: 20px;
+        }
+
+        /* Individual todo items */
+        .todo-item {
+            font-size: 24px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: white;
+            border: 1px solid black;
+            clear: both;
+            overflow: hidden;
+        }
+
+        /* Priority styling */
+        .priority-p0 {
+            border-left: 8px solid #000; /* Black border for P0 (highest priority) */
+            background-color: #f0f0f0;
+        }
+
+        .priority-p1 {
+            border-left: 6px solid #666; /* Dark gray for P1 */
+        }
+
+        .priority-p2 {
+            border-left: 4px solid #999; /* Medium gray for P2 */
+        }
+
+        .priority-p3, .priority-other {
+            border-left: 2px solid #ccc; /* Light gray for P3 and other */
+        }
+
+        /* Status indicator for keep-awake */
+        #status {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 12px;
+            color: #666;
+            background-color: white;
+            padding: 5px;
+            border: 1px solid #ccc;
+        }
+
+        /* Loading state */
+        .loading {
+            text-align: center;
+            font-size: 20px;
+            margin-top: 50px;
+        }
+
+        /* Error state */
+        .error {
+            text-align: center;
+            font-size: 18px;
+            margin-top: 50px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div id="dashboard">
+        <div id="current-date">Loading...</div>
+        <div id="todo-list">
+            <div class="loading">Loading to-do items...</div>
+        </div>
+        <div id="status">Last updated: --:--:--</div>
+    </div>
+
+    <script>
+        // Configuration
+        var SPREADSHEET_ID = '1cJj0Nfm3mq2S-KtJqcMh7meQFvavxzlqPWPmx37IVfk';
+        var POLL_INTERVAL = 8 * 60 * 1000; // 8 minutes in milliseconds
+        var KEEP_AWAKE_INTERVAL = 30 * 1000; // 30 seconds for sleep prevention
+
+        // Global variables
+        var lastUpdateTime = new Date();
+        var keepAwakeTimer = null;
+        var pollTimer = null;
+
+        // Initialize dashboard
+        function init() {
+            updateDate();
+            setupFullscreen();
+            startKeepAwake();
+            fetchTodoData();
+            startPolling();
+        }
+
+        // Update current date display
+        function updateDate() {
+            var now = new Date();
+            var options = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            };
+            var dateString = now.toLocaleDateString('en-US', options);
+            document.getElementById('current-date').textContent = dateString;
+        }
+
+        // Setup fullscreen mode (best effort)
+        function setupFullscreen() {
+            var element = document.documentElement;
+
+            // Try modern fullscreen API
+            if (element.requestFullscreen) {
+                element.requestFullscreen();
+            } else if (element.mozRequestFullScreen) { // Firefox
+                element.mozRequestFullScreen();
+            } else if (element.webkitRequestFullscreen) { // Chrome/Safari
+                element.webkitRequestFullscreen();
+            } else if (element.msRequestFullscreen) { // IE/Edge
+                element.msRequestFullscreen();
+            }
+
+            // Fallback: CSS-based fullscreen
+            document.body.style.margin = '0';
+            document.body.style.padding = '0';
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.height = '100%';
+            document.documentElement.style.width = '100%';
+        }
+
+        // Keep device awake with periodic DOM updates
+        function startKeepAwake() {
+            if (keepAwakeTimer) {
+                clearInterval(keepAwakeTimer);
+            }
+
+            keepAwakeTimer = setInterval(function() {
+                var statusElement = document.getElementById('status');
+                var now = new Date();
+                var timeString = now.getHours() + ':' +
+                               (now.getMinutes() < 10 ? '0' : '') + now.getMinutes() + ':' +
+                               (now.getSeconds() < 10 ? '0' : '') + now.getSeconds();
+
+                // Toggle a small visual indicator to prevent sleep
+                var blinkChar = now.getSeconds() % 2 === 0 ? ':' : ' ';
+                statusElement.textContent = 'Last updated: ' + timeString.replace(':', blinkChar);
+
+                // Force DOM repaint for Kindle
+                statusElement.style.display = 'none';
+                statusElement.offsetHeight; // Trigger reflow
+                statusElement.style.display = 'block';
+            }, KEEP_AWAKE_INTERVAL);
+        }
+
+        // Start polling for data updates
+        function startPolling() {
+            if (pollTimer) {
+                clearInterval(pollTimer);
+            }
+
+            pollTimer = setInterval(function() {
+                fetchTodoData();
+            }, POLL_INTERVAL);
+        }
+
+        // Fetch data from Google Sheets using Visualization API
+        function fetchTodoData() {
+            var url = 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/gviz/tq?tqx=out:json';
+
+            // Create XMLHttpRequest (ES5 compatible)
+            var xhr = new XMLHttpRequest();
+
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        try {
+                            // Parse the Google Visualization API response
+                            var responseText = xhr.responseText;
+                            console.log('Response from Google Sheets:', responseText);
+
+                            // Remove the /*O_o*/ prefix and parse as JSON
+                            var jsonText = responseText.replace(/^\/\*O_o\*\/\s*/, '');
+
+                            // Try JSON.parse first
+                            var data = JSON.parse(jsonText);
+                            console.log('Parsed data:', data);
+
+                            if (data.status === 'ok' && data.table) {
+                                updateTodoList(data.table.rows);
+                                lastUpdateTime = new Date();
+                            } else {
+                                showError('Invalid data format from Google Sheets');
+                                console.error('Invalid data format:', data);
+                            }
+                        } catch (e) {
+                            showError('Failed to parse data: ' + e.message);
+                            console.error('Error parsing data:', e);
+                        }
+                    } else {
+                        showError('Failed to fetch data (HTTP ' + xhr.status + ')');
+                        console.error('HTTP error:', xhr.status, xhr.statusText);
+                    }
+                }
+            };
+
+            xhr.open('GET', url, true);
+            xhr.send();
+        }
+
+        // Update the todo list display
+        function updateTodoList(rows) {
+            var todoList = document.getElementById('todo-list');
+            todoList.innerHTML = '';
+
+            if (!rows || rows.length === 0) {
+                todoList.innerHTML = '<div class="todo-item">No to-do items found</div>';
+                return;
+            }
+
+            try {
+                // Parse and filter valid todo items (skip header row)
+                var todos = [];
+                for (var i = 0; i < rows.length; i++) {
+                    var row = rows[i];
+                    if (row && row.c && row.c.length >= 2 && row.c[0] && row.c[0].v != null && row.c[1] && row.c[1].v != null) {
+                        var priority = row.c[0].v.toString();
+                        var description = row.c[1].v.toString();
+
+                        // Skip header row
+                        if (priority.toLowerCase() === 'priority' && description.toLowerCase() === 'description') {
+                            continue;
+                        }
+
+                        todos.push({
+                            priority: priority,
+                            description: description,
+                            priorityValue: parsePriorityValue(priority)
+                        });
+                    }
+                }
+                console.log('Parsed to-do items:', todos);
+
+                // Sort by priority (lower number = higher priority)
+                todos.sort(function(a, b) {
+                    return a.priorityValue - b.priorityValue;
+                });
+                console.log('Sorted to-do items:', todos);
+
+                // Display sorted todos
+                for (var j = 0; j < todos.length; j++) {
+                    var todo = todos[j];
+                    var itemText = todo.description;
+
+                    // Truncate to max 6 words for Kindle readability
+                    var words = itemText.split(' ');
+                    if (words.length > 6) {
+                        itemText = words.slice(0, 6).join(' ') + '...';
+                    }
+
+                    var itemElement = document.createElement('div');
+                    var priorityClass = 'priority-' + todo.priority.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    itemElement.className = 'todo-item ' + priorityClass;
+                    itemElement.textContent = '[' + todo.priority + '] ' + itemText;
+                    todoList.appendChild(itemElement);
+                }
+            } catch (e) {
+                showError('Failed to update to-do list: ' + e.message);
+                console.error('Error updating to-do list:', e);
+            }
+        }
+
+        // Parse priority value for sorting (P0 = 0, P1 = 1, P2 = 2, etc.)
+        function parsePriorityValue(priority) {
+            var match = priority.match(/^P(\d+)$/i);
+            if (match) {
+                return parseInt(match[1], 10);
+            }
+            // Default to high number for unknown formats
+            return 999;
+        }
+
+        // Show error state
+        function showError(message) {
+            var todoList = document.getElementById('todo-list');
+            todoList.innerHTML = '<div class="error">Error: ' + message + '<br><br>Will retry automatically.</div>';
+            console.error(message);
+        }
+
+        // Initialize immediately for debugging
+        init();
+    </script>
+</body>
+</html>
